@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>秋雨海棠 | 产品选购中心</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-gold: #c5a059;
+            --dark-bg: #0f1115;
+            --card-bg: #1a1d23;
+        }
+        body {
+            font-family: 'Inter', 'Noto Serif SC', serif;
+            background-color: var(--dark-bg);
+            color: #e5e7eb;
+            scroll-behavior: smooth;
+        }
+        .gold-text { color: var(--brand-gold); }
+        .gold-border { border-color: var(--brand-gold); }
+        .gold-bg { background-color: var(--brand-gold); }
+
+        /* 自定义滚动条 */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
+
+        .product-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+        }
+        .product-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--brand-gold);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+        .cart-panel {
+            backdrop-filter: blur(10px);
+            background: rgba(26, 29, 35, 0.95);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="sticky top-0 z-50 py-6 px-8 flex justify-between items-center bg-[#0f1115]/80 backdrop-blur-md border-b border-gray-800">
+        <div>
+            <h1 class="text-2xl font-bold tracking-widest gold-text">秋雨海棠</h1>
+            <p class="text-xs text-gray-500 uppercase tracking-tighter">Premium Skincare Series 2023</p>
+        </div>
+        <div class="text-right">
+            <span class="text-sm text-gray-400">当前库房订单统计</span>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 py-8 pb-32">
+        <div id="product-container" class="space-y-12">
+            </div>
+    </main>
+
+    <div class="fixed bottom-0 left-0 right-0 p-4 z-50">
+        <div class="max-w-4xl mx-auto cart-panel rounded-2xl border border-gray-700 p-6 flex flex-col md:flex-row items-center justify-between shadow-2xl">
+            <div class="mb-4 md:mb-0">
+                <p class="text-gray-400 text-sm">已选择商品: <span id="total-count" class="text-white font-bold">0</span> 件</p>
+                <h2 class="text-3xl font-bold gold-text">Total: ¥<span id="total-price">0</span></h2>
+            </div>
+            <div class="flex space-x-4">
+                <button onclick="resetCart()" class="px-6 py-3 rounded-xl border border-gray-600 hover:bg-gray-800 transition">清空</button>
+                <button class="px-10 py-3 rounded-xl gold-bg text-black font-bold hover:opacity-90 transition shadow-lg shadow-yellow-900/20">
+                    提交订单
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 商品数据结构
+        const productData = [
+            {
+                category: "臻颜核心系列",
+                items: [
+                    { id: 1, name: "臻颜精粹水", price: 258 },
+                    { id: 2, name: "臻颜眼霜", price: 498 },
+                    { id: 3, name: "臻颜面霜", price: 498 },
+                    { id: 4, name: "臻颜精华液", price: 698 },
+                    { id: 5, name: "臻颜凝霜", price: 398 },
+                    { id: 6, name: "防晒霜", price: 398 },
+                    { id: 7, name: "洗面奶 (120ml)", price: 498 },
+                    { id: 8, name: "臻颜一套 (五件)", price: 2350 },
+                    { id: 9, name: "臻耀套盒", price: 2280, note: "含膜*2, 洗面奶, 防晒, 臻颜水, 纯真" }
+                ]
+            },
+            {
+                category: "面膜护理系列",
+                items: [
+                    { id: 10, name: "补水面膜", price: 980 },
+                    { id: 11, name: "靓肤面膜", price: 980 },
+                    { id: 12, name: "黄金面膜", price: 980 },
+                    { id: 13, name: "花瓣面膜", price: 980 },
+                    { id: 14, name: "润肌面膜", price: 1280 }
+                ]
+            },
+            {
+                category: "日常与修护",
+                items: [
+                    { id: 15, name: "洁面乳 (120ml)", price: 498 },
+                    { id: 16, name: "时光保湿精粹水", price: 498 },
+                    { id: 17, name: "舒敏精华", price: 1980 },
+                    { id: 18, name: "平衡霜", price: 29800, note: "体验价 9800/次" }
+                ]
+            },
+            {
+                category: "健康调理内服",
+                items: [
+                    { id: 19, name: "清幽肽", price: 699 },
+                    { id: 20, name: "益畅", price: 799 },
+                    { id: 21, name: "纯珍清露", price: 850 },
+                    { id: 22, name: "美颜肌", price: 850 },
+                    { id: 23, name: "睡美人", price: 850 },
+                    { id: 24, name: "缮骨肽", price: 850 },
+                    { id: 25, name: "活力源", price: 3980 },
+                    { id: 26, name: "黑珍肽", price: 880 }
+                ]
+            },
+            {
+                category: "高端院护理",
+                items: [
+                    { id: 27, name: "皙颜", price: 11800 },
+                    { id: 28, name: "眼抗", price: 4980 },
+                    { id: 29, name: "面部滋养套", price: 3800 },
+                    { id: 30, name: "宛若", price: 6800 },
+                    { id: 31, name: "舒缓净化", price: 6800 },
+                    { id: 32, name: "肩颈护理", price: 6800 },
+                    { id: 33, name: "臀疗", price: 9800 },
+                    { id: 34, name: "箐纯智颜", price: 880, note: "7800/12次" },
+                    { id: 35, name: "5D塑形", price: 3980, note: "全周期 19800" },
+                    { id: 36, name: "水漾保湿套盒", price: 2980 }
+                ]
+            },
+            {
+                category: "院装/大包装产品",
+                items: [
+                    { id: 37, name: "院装精华素", price: 1600 },
+                    { id: 38, name: "赋活美容液", price: 1800 },
+                    { id: 39, name: "按摩膏", price: 1280 },
+                    { id: 40, name: "身体/面部油", price: 1300 },
+                    { id: 41, name: "院装洁面乳", price: 980 }
+                ]
+            }
+        ];
+
+        // 购物车状态
+        let cart = {};
+
+        // 初始化页面
+        function init() {
+            const container = document.getElementById('product-container');
+            productData.forEach(cat => {
+                const section = document.createElement('section');
+                section.innerHTML = `
+                    <div class="flex items-center mb-6">
+                        <div class="h-px flex-1 bg-gray-800"></div>
+                        <h3 class="px-4 text-xl font-bold gold-text tracking-widest">${cat.category}</h3>
+                        <div class="h-px flex-1 bg-gray-800"></div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        ${cat.items.map(item => `
+                            <div class="product-card bg-[#1a1d23] p-6 rounded-2xl flex flex-col justify-between">
+                                <div>
+                                    <div class="flex justify-between items-start mb-2">
+                                        <h4 class="text-lg font-semibold text-white">${item.name}</h4>
+                                        <span class="text-xs gold-text border border-[#c5a059]/30 px-2 py-0.5 rounded">NEW</span>
+                                    </div>
+                                    ${item.note ? `<p class="text-xs text-gray-500 mb-4 italic">${item.note}</p>` : '<div class="mb-4"></div>'}
+                                </div>
+                                <div class="flex justify-between items-center mt-4">
+                                    <span class="text-xl font-light text-gray-200">¥${item.price.toLocaleString()}</span>
+                                    <div class="flex items-center space-x-3 bg-black/30 rounded-lg p-1">
+                                        <button onclick="updateQty(${item.id}, -1, ${item.price})" class="w-8 h-8 rounded bg-gray-700 hover:bg-gray-600 flex items-center justify-center">-</button>
+                                        <span id="qty-${item.id}" class="w-6 text-center text-sm font-bold">0</span>
+                                        <button onclick="updateQty(${item.id}, 1, ${item.price})" class="w-8 h-8 rounded gold-bg text-black hover:opacity-80 flex items-center justify-center">+</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                container.appendChild(section);
+            });
+        }
+
+        // 更新数量
+        function updateQty(id, change, price) {
+            if (!cart[id]) cart[id] = { qty: 0, price: price };
+            
+            cart[id].qty = Math.max(0, cart[id].qty + change);
+            
+            document.getElementById(`qty-${id}`).innerText = cart[id].qty;
+            calculateTotal();
+            
+            // 简单的动画反馈
+            const el = document.getElementById(`qty-${id}`);
+            el.classList.add('scale-125', 'gold-text');
+            setTimeout(() => el.classList.remove('scale-125', 'gold-text'), 200);
+        }
+
+        // 计算总价
+        function calculateTotal() {
+            let total = 0;
+            let count = 0;
+            for (let key in cart) {
+                total += cart[key].qty * cart[key].price;
+                count += cart[key].qty;
+            }
+            document.getElementById('total-price').innerText = total.toLocaleString();
+            document.getElementById('total-count').innerText = count;
+        }
+
+        // 重置
+        function resetCart() {
+            cart = {};
+            document.querySelectorAll('[id^="qty-"]').forEach(el => el.innerText = '0');
+            calculateTotal();
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
