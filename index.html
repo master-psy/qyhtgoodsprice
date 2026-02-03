@@ -3,224 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>秋雨海棠 | 产品选购中心</title>
+    <title>秋雨海棠 | 数字化订货单</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --brand-gold: #c5a059;
-            --dark-bg: #0f1115;
-            --card-bg: #1a1d23;
-        }
-        body {
-            font-family: 'Inter', 'Noto Serif SC', serif;
-            background-color: var(--dark-bg);
-            color: #e5e7eb;
-            scroll-behavior: smooth;
-        }
+        :root { --brand-gold: #c5a059; --dark-bg: #0f1115; --card-bg: #1a1d23; }
+        body { font-family: 'Inter', 'Noto Serif SC', serif; background-color: var(--dark-bg); color: #e5e7eb; overflow-x: hidden; }
         .gold-text { color: var(--brand-gold); }
-        .gold-border { border-color: var(--brand-gold); }
         .gold-bg { background-color: var(--brand-gold); }
-
-        /* 自定义滚动条 */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-thumb { background: #374151; border-radius: 10px; }
-
-        .product-card {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            border: 1px solid transparent;
-        }
-        .product-card:hover {
-            transform: translateY(-4px);
-            border-color: var(--brand-gold);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
-        .cart-panel {
-            backdrop-filter: blur(10px);
-            background: rgba(26, 29, 35, 0.95);
-        }
+        .product-card { transition: all 0.3s ease; border: 1px solid #2d2d2d; }
+        .product-card:hover { border-color: var(--brand-gold); background: #22262d; }
+        
+        /* 侧边栏动画 */
+        #cart-drawer { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1); transform: translateX(100%); }
+        #cart-drawer.open { transform: translateX(0); }
+        .drawer-overlay { transition: opacity 0.3s ease; opacity: 0; pointer-events: none; }
+        .drawer-overlay.open { opacity: 1; pointer-events: auto; }
     </style>
 </head>
-<body class="antialiased">
+<body class="antialiased pb-32">
 
-    <header class="sticky top-0 z-50 py-6 px-8 flex justify-between items-center bg-[#0f1115]/80 backdrop-blur-md border-b border-gray-800">
+    <header class="sticky top-0 z-40 py-6 px-8 flex justify-between items-center bg-[#0f1115]/90 backdrop-blur-md border-b border-gray-800">
         <div>
-            <h1 class="text-2xl font-bold tracking-widest gold-text">秋雨海棠</h1>
-            <p class="text-xs text-gray-500 uppercase tracking-tighter">Premium Skincare Series 2023</p>
+            <h1 class="text-2xl font-bold tracking-[0.2em] gold-text uppercase">秋雨海棠</h1>
+            <p class="text-[10px] text-gray-500 tracking-widest mt-1">ESTHER BEGONIACEAE • PRODUCT LIST</p>
         </div>
-        <div class="text-right">
-            <span class="text-sm text-gray-400">当前库房订单统计</span>
+        <div class="flex items-center space-x-6">
+            <div class="hidden md:flex items-center bg-gray-900 px-3 py-1.5 rounded-full border border-gray-700">
+                <span class="text-xs text-gray-500 mr-2">折扣</span>
+                <select id="discount-select" onchange="calculateTotal()" class="bg-transparent text-sm font-bold text-white border-none focus:ring-0 cursor-pointer">
+                    <option value="1">100% (原价)</option>
+                    <option value="0.9">90% (9折)</option>
+                    <option value="0.8">80% (8折)</option>
+                    <option value="0.5">50% (半价)</option>
+                </select>
+            </div>
+            <button onclick="toggleDrawer()" class="relative p-2 bg-gray-800 rounded-full hover:bg-gray-700 transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="List" />
+                    <path d="M4 6h16M4 12h16M4 18h7" />
+                </svg>
+                <span id="cart-dot" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full text-[10px] flex items-center justify-center hidden">0</span>
+            </button>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-8 pb-32">
-        <div id="product-container" class="space-y-12">
-            </div>
-    </main>
+    <main class="max-w-7xl mx-auto px-6 py-12" id="product-container"></main>
 
-    <div class="fixed bottom-0 left-0 right-0 p-4 z-50">
-        <div class="max-w-4xl mx-auto cart-panel rounded-2xl border border-gray-700 p-6 flex flex-col md:flex-row items-center justify-between shadow-2xl">
-            <div class="mb-4 md:mb-0">
-                <p class="text-gray-400 text-sm">已选择商品: <span id="total-count" class="text-white font-bold">0</span> 件</p>
-                <h2 class="text-3xl font-bold gold-text">Total: ¥<span id="total-price">0</span></h2>
+    <div class="fixed bottom-0 left-0 right-0 z-30 p-4 bg-gradient-to-t from-black to-transparent">
+        <div class="max-w-5xl mx-auto bg-[#1a1d23]/95 backdrop-blur-xl border border-gray-700 p-6 rounded-3xl shadow-2xl flex flex-wrap items-center justify-between">
+            <div class="cursor-pointer" onclick="toggleDrawer()">
+                <p class="text-xs text-gray-500 uppercase tracking-widest mb-1 italic">点击查看已选清单 ↑</p>
+                <div class="flex items-baseline space-x-2">
+                    <span class="text-3xl font-bold gold-text tracking-tighter">¥<span id="final-price">0</span></span>
+                    <span class="text-sm text-gray-500 line-through">¥<span id="raw-price">0</span></span>
+                </div>
             </div>
-            <div class="flex space-x-4">
-                <button onclick="resetCart()" class="px-6 py-3 rounded-xl border border-gray-600 hover:bg-gray-800 transition">清空</button>
-                <button class="px-10 py-3 rounded-xl gold-bg text-black font-bold hover:opacity-90 transition shadow-lg shadow-yellow-900/20">
-                    提交订单
+            <div class="flex items-center space-x-4">
+                <div id="save-banner" class="hidden px-3 py-1 bg-yellow-900/20 border border-yellow-700/50 rounded-lg text-xs gold-text">
+                    已省 ¥<span id="save-value">0</span>
+                </div>
+                <button onclick="toggleDrawer()" class="gold-bg text-black font-bold px-8 py-3 rounded-xl hover:brightness-110 transition-all">
+                    确认下单
                 </button>
             </div>
         </div>
     </div>
 
+    <div id="drawer-overlay" onclick="toggleDrawer()" class="drawer-overlay fixed inset-0 bg-black/60 z-[60]"></div>
+    <div id="cart-drawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-[#16191e] z-[70] shadow-2xl flex flex-col border-l border-gray-800">
+        <div class="p-6 border-b border-gray-800 flex justify-between items-center">
+            <h2 class="text-xl font-bold tracking-wider">已选明细</h2>
+            <button onclick="toggleDrawer()" class="text-gray-400 hover:text-white text-2xl">&times;</button>
+        </div>
+        
+        <div id="cart-list" class="flex-1 overflow-y-auto p-6 space-y-4">
+            <div class="text-center py-20 text-gray-600">
+                <p>清单空空如也</p>
+            </div>
+        </div>
+
+        <div class="p-6 bg-black/40 border-t border-gray-800">
+            <div class="flex justify-between mb-4">
+                <span class="text-gray-400">商品件数</span>
+                <span id="drawer-count" class="font-bold">0 件</span>
+            </div>
+            <div class="flex justify-between mb-6">
+                <span class="text-gray-400">应付总额</span>
+                <span class="text-2xl font-bold gold-text">¥<span id="drawer-price">0</span></span>
+            </div>
+            <button class="w-full gold-bg text-black font-bold py-4 rounded-xl shadow-lg">提交保存</button>
+        </div>
+    </div>
+
     <script>
-        // 商品数据结构
-        const productData = [
-            {
-                category: "臻颜核心系列",
-                items: [
-                    { id: 1, name: "臻颜精粹水", price: 258 },
-                    { id: 2, name: "臻颜眼霜", price: 498 },
-                    { id: 3, name: "臻颜面霜", price: 498 },
-                    { id: 4, name: "臻颜精华液", price: 698 },
-                    { id: 5, name: "臻颜凝霜", price: 398 },
-                    { id: 6, name: "防晒霜", price: 398 },
-                    { id: 7, name: "洗面奶 (120ml)", price: 498 },
-                    { id: 8, name: "臻颜一套 (五件)", price: 2350 },
-                    { id: 9, name: "臻耀套盒", price: 2280, note: "含膜*2, 洗面奶, 防晒, 臻颜水, 纯真" }
-                ]
-            },
-            {
-                category: "面膜护理系列",
-                items: [
-                    { id: 10, name: "补水面膜", price: 980 },
-                    { id: 11, name: "靓肤面膜", price: 980 },
-                    { id: 12, name: "黄金面膜", price: 980 },
-                    { id: 13, name: "花瓣面膜", price: 980 },
-                    { id: 14, name: "润肌面膜", price: 1280 }
-                ]
-            },
-            {
-                category: "日常与修护",
-                items: [
-                    { id: 15, name: "洁面乳 (120ml)", price: 498 },
-                    { id: 16, name: "时光保湿精粹水", price: 498 },
-                    { id: 17, name: "舒敏精华", price: 1980 },
-                    { id: 18, name: "平衡霜", price: 29800, note: "体验价 9800/次" }
-                ]
-            },
-            {
-                category: "健康调理内服",
-                items: [
-                    { id: 19, name: "清幽肽", price: 699 },
-                    { id: 20, name: "益畅", price: 799 },
-                    { id: 21, name: "纯珍清露", price: 850 },
-                    { id: 22, name: "美颜肌", price: 850 },
-                    { id: 23, name: "睡美人", price: 850 },
-                    { id: 24, name: "缮骨肽", price: 850 },
-                    { id: 25, name: "活力源", price: 3980 },
-                    { id: 26, name: "黑珍肽", price: 880 }
-                ]
-            },
-            {
-                category: "高端院护理",
-                items: [
-                    { id: 27, name: "皙颜", price: 11800 },
-                    { id: 28, name: "眼抗", price: 4980 },
-                    { id: 29, name: "面部滋养套", price: 3800 },
-                    { id: 30, name: "宛若", price: 6800 },
-                    { id: 31, name: "舒缓净化", price: 6800 },
-                    { id: 32, name: "肩颈护理", price: 6800 },
-                    { id: 33, name: "臀疗", price: 9800 },
-                    { id: 34, name: "箐纯智颜", price: 880, note: "7800/12次" },
-                    { id: 35, name: "5D塑形", price: 3980, note: "全周期 19800" },
-                    { id: 36, name: "水漾保湿套盒", price: 2980 }
-                ]
-            },
-            {
-                category: "院装/大包装产品",
-                items: [
-                    { id: 37, name: "院装精华素", price: 1600 },
-                    { id: 38, name: "赋活美容液", price: 1800 },
-                    { id: 39, name: "按摩膏", price: 1280 },
-                    { id: 40, name: "身体/面部油", price: 1300 },
-                    { id: 41, name: "院装洁面乳", price: 980 }
-                ]
-            }
+        // 商品数据
+        const products = [
+            { category: "臻颜系列", items: [
+                { id: 1, name: "臻颜精粹水", price: 258 }, { id: 2, name: "臻颜眼霜", price: 498 },
+                { id: 4, name: "臻颜精华液", price: 698 }, { id: 8, name: "臻颜一套 (五件)", price: 2350 }
+            ]},
+            { category: "高级护理", items: [
+                { id: 27, name: "皙颜", price: 11800 }, { id: 30, name: "宛若", price: 6800 },
+                { id: 33, name: "臀疗", price: 9800 }, { id: 18, name: "平衡霜", price: 29800 }
+            ]},
+            { category: "口服调理", items: [
+                { id: 19, name: "清幽肽", price: 699 }, { id: 25, name: "活力源", price: 3980 },
+                { id: 26, name: "黑珍肽", price: 880 }
+            ]}
         ];
 
-        // 购物车状态
         let cart = {};
 
-        // 初始化页面
         function init() {
             const container = document.getElementById('product-container');
-            productData.forEach(cat => {
-                const section = document.createElement('section');
-                section.innerHTML = `
-                    <div class="flex items-center mb-6">
-                        <div class="h-px flex-1 bg-gray-800"></div>
-                        <h3 class="px-4 text-xl font-bold gold-text tracking-widest">${cat.category}</h3>
-                        <div class="h-px flex-1 bg-gray-800"></div>
-                    </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        ${cat.items.map(item => `
-                            <div class="product-card bg-[#1a1d23] p-6 rounded-2xl flex flex-col justify-between">
-                                <div>
-                                    <div class="flex justify-between items-start mb-2">
-                                        <h4 class="text-lg font-semibold text-white">${item.name}</h4>
-                                        <span class="text-xs gold-text border border-[#c5a059]/30 px-2 py-0.5 rounded">NEW</span>
+            products.forEach(cat => {
+                const html = `
+                    <div class="mb-12">
+                        <h2 class="text-lg font-bold gold-text mb-6 flex items-center tracking-widest">
+                            <span class="w-8 h-[1px] bg-yellow-600/50 mr-3"></span>${cat.category}
+                        </h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            ${cat.items.map(p => `
+                                <div class="product-card rounded-2xl p-5 flex justify-between items-center bg-[#1a1d23]">
+                                    <div>
+                                        <h4 class="font-medium">${p.name}</h4>
+                                        <p class="text-sm text-gray-500 mt-1">¥${p.price.toLocaleString()}</p>
                                     </div>
-                                    ${item.note ? `<p class="text-xs text-gray-500 mb-4 italic">${item.note}</p>` : '<div class="mb-4"></div>'}
-                                </div>
-                                <div class="flex justify-between items-center mt-4">
-                                    <span class="text-xl font-light text-gray-200">¥${item.price.toLocaleString()}</span>
-                                    <div class="flex items-center space-x-3 bg-black/30 rounded-lg p-1">
-                                        <button onclick="updateQty(${item.id}, -1, ${item.price})" class="w-8 h-8 rounded bg-gray-700 hover:bg-gray-600 flex items-center justify-center">-</button>
-                                        <span id="qty-${item.id}" class="w-6 text-center text-sm font-bold">0</span>
-                                        <button onclick="updateQty(${item.id}, 1, ${item.price})" class="w-8 h-8 rounded gold-bg text-black hover:opacity-80 flex items-center justify-center">+</button>
+                                    <div class="flex items-center space-x-3">
+                                        <button onclick="updateQty(${p.id}, -1, '${p.name}', ${p.price})" class="w-8 h-8 rounded-lg bg-gray-800 flex items-center justify-center">-</button>
+                                        <span id="qty-${p.id}" class="w-4 text-center text-sm font-bold">0</span>
+                                        <button onclick="updateQty(${p.id}, 1, '${p.name}', ${p.price})" class="w-8 h-8 rounded-lg gold-bg text-black flex items-center justify-center font-bold">+</button>
                                     </div>
                                 </div>
-                            </div>
-                        `).join('')}
+                            `).join('')}
+                        </div>
                     </div>
                 `;
-                container.appendChild(section);
+                container.insertAdjacentHTML('beforeend', html);
             });
         }
 
-        // 更新数量
-        function updateQty(id, change, price) {
-            if (!cart[id]) cart[id] = { qty: 0, price: price };
-            
+        function updateQty(id, change, name, price) {
+            if (!cart[id]) cart[id] = { name: name, qty: 0, price: price };
             cart[id].qty = Math.max(0, cart[id].qty + change);
+            if (cart[id].qty === 0) delete cart[id];
             
-            document.getElementById(`qty-${id}`).innerText = cart[id].qty;
+            // 更新页面上所有该商品的显示数量
+            const qtyEls = document.querySelectorAll(`[id="qty-${id}"]`);
+            qtyEls.forEach(el => el.innerText = cart[id] ? cart[id].qty : 0);
+            
             calculateTotal();
-            
-            // 简单的动画反馈
-            const el = document.getElementById(`qty-${id}`);
-            el.classList.add('scale-125', 'gold-text');
-            setTimeout(() => el.classList.remove('scale-125', 'gold-text'), 200);
+            renderCartList();
         }
 
-        // 计算总价
         function calculateTotal() {
-            let total = 0;
+            let raw = 0;
             let count = 0;
-            for (let key in cart) {
-                total += cart[key].qty * cart[key].price;
-                count += cart[key].qty;
+            const discount = parseFloat(document.getElementById('discount-select').value);
+
+            for (let id in cart) {
+                raw += cart[id].qty * cart[id].price;
+                count += cart[id].qty;
             }
-            document.getElementById('total-price').innerText = total.toLocaleString();
-            document.getElementById('total-count').innerText = count;
+
+            const final = Math.round(raw * discount);
+            
+            document.getElementById('raw-price').innerText = raw.toLocaleString();
+            document.getElementById('final-price').innerText = final.toLocaleString();
+            document.getElementById('drawer-price').innerText = final.toLocaleString();
+            document.getElementById('drawer-count').innerText = `${count} 件`;
+            
+            // 提示立省
+            const saveBanner = document.getElementById('save-banner');
+            const saveVal = document.getElementById('save-value');
+            if (raw > final) {
+                saveBanner.classList.remove('hidden');
+                saveVal.innerText = (raw - final).toLocaleString();
+            } else {
+                saveBanner.classList.add('hidden');
+            }
+
+            // 顶部小红点
+            const dot = document.getElementById('cart-dot');
+            dot.innerText = count;
+            count > 0 ? dot.classList.remove('hidden') : dot.classList.add('hidden');
         }
 
-        // 重置
-        function resetCart() {
-            cart = {};
-            document.querySelectorAll('[id^="qty-"]').forEach(el => el.innerText = '0');
-            calculateTotal();
+        function renderCartList() {
+            const listContainer = document.getElementById('cart-list');
+            const keys = Object.keys(cart);
+            
+            if (keys.length === 0) {
+                listContainer.innerHTML = '<div class="text-center py-20 text-gray-600"><p>尚未选择任何商品</p></div>';
+                return;
+            }
+
+            listContainer.innerHTML = keys.map(id => {
+                const item = cart[id];
+                return `
+                    <div class="flex justify-between items-center bg-black/20 p-4 rounded-xl border border-gray-800">
+                        <div>
+                            <p class="font-bold text-sm text-gray-100">${item.name}</p>
+                            <p class="text-xs gold-text mt-1">¥${item.price} × ${item.qty}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="updateQty(${id}, -1, '${item.name}', ${item.price})" class="w-6 h-6 rounded bg-gray-700 text-xs">-</button>
+                            <span class="text-xs font-bold w-4 text-center">${item.qty}</span>
+                            <button onclick="updateQty(${id}, 1, '${item.name}', ${item.price})" class="w-6 h-6 rounded gold-bg text-black text-xs">+</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleDrawer() {
+            document.getElementById('cart-drawer').classList.toggle('open');
+            document.getElementById('drawer-overlay').classList.toggle('open');
         }
 
         window.onload = init;
