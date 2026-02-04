@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数字组合生成器 - 100组定制组合</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a;
+            color: #f1f5f9;
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            border-color: #6366f1;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+        .number-chip {
+            background: rgba(99, 102, 241, 0.15);
+            border: 1px solid rgba(99, 102, 241, 0.3);
+            color: #818cf8;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 10px;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen custom-scrollbar">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 py-6 px-4 glass-card border-b border-white/10 mb-8">
+        <div class="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div class="flex items-center gap-3">
+                <div class="bg-indigo-600 p-2 rounded-lg">
+                    <i data-lucide="settings-2" class="w-6 h-6 text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold tracking-tight">数字组合生成器</h1>
+                    <p class="text-sm text-slate-400">范围 1-999 | 100 组 | 每组 9 个数字</p>
+                </div>
+            </div>
+
+            <!-- Configuration Controls -->
+            <div class="flex flex-wrap items-center gap-4 bg-slate-800/50 p-3 rounded-xl border border-white/10">
+                <div class="flex items-center gap-2">
+                    <label class="text-xs font-bold text-slate-400 uppercase whitespace-nowrap">排除包含:</label>
+                    <input type="text" id="excludeInput" value="44, 444" placeholder="例如: 44, 7" 
+                        class="bg-slate-900 border border-slate-700 rounded px-3 py-1 text-sm focus:outline-none focus:border-indigo-500 w-40 transition-all">
+                </div>
+                <div class="h-6 w-[1px] bg-slate-700 hidden sm:block"></div>
+                <div class="flex items-center gap-2">
+                    <button id="copyAllBtn" class="flex items-center gap-2 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors">
+                        <i data-lucide="copy" class="w-4 h-4"></i> 全部复制
+                    </button>
+                    <button id="downloadBtn" class="flex items-center gap-2 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-sm font-semibold transition-colors">
+                        <i data-lucide="download" class="w-4 h-4"></i> 导出 CSV
+                    </button>
+                    <button id="refreshBtn" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 px-4 py-1.5 rounded-lg text-sm font-semibold transition-colors shadow-lg shadow-indigo-500/20">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> 重新生成
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 pb-12">
+        <!-- Dashboard Stats -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+            <div class="p-4 rounded-xl border border-white/5 bg-slate-800/50">
+                <p class="text-xs text-slate-500 uppercase font-bold mb-1">当前组数</p>
+                <p id="statGroups" class="text-2xl font-mono">100</p>
+            </div>
+            <div class="p-4 rounded-xl border border-white/5 bg-slate-800/50">
+                <p class="text-xs text-slate-500 uppercase font-bold mb-1">可用数字池大小</p>
+                <p id="statPool" class="text-2xl font-mono text-indigo-400">---</p>
+            </div>
+            <div class="p-4 rounded-xl border border-white/5 bg-slate-800/50">
+                <p class="text-xs text-slate-500 uppercase font-bold mb-1">当前排除规则</p>
+                <p id="statExclude" class="text-sm font-mono text-rose-400 truncate pt-2">---</p>
+            </div>
+        </div>
+
+        <!-- Content Grid -->
+        <div id="resultsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            <!-- JavaScript will populate this -->
+        </div>
+
+        <!-- Error Alert (Hidden by default) -->
+        <div id="errorBox" class="hidden bg-rose-500/20 border border-rose-500/50 text-rose-200 p-6 rounded-2xl text-center mb-8">
+            <i data-lucide="alert-circle" class="w-8 h-8 mx-auto mb-2 opacity-80"></i>
+            <p class="font-bold">数字池不足！</p>
+            <p class="text-sm opacity-80">排除规则过多，导致无法凑齐 100 组不重复数字。请精简排除字符。</p>
+        </div>
+
+        <!-- Toast Notification -->
+        <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-indigo-600 text-white px-6 py-3 rounded-full shadow-2xl opacity-0 transition-opacity duration-300 pointer-events-none z-[100]">
+            已复制到剪贴板
+        </div>
+    </main>
+
+    <script>
+        // Initialization
+        const resultsGrid = document.getElementById('resultsGrid');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const copyAllBtn = document.getElementById('copyAllBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const excludeInput = document.getElementById('excludeInput');
+        const errorBox = document.getElementById('errorBox');
+        const toast = document.getElementById('toast');
+
+        // Stats elements
+        const statPoolSize = document.getElementById('statPool');
+        const statExcludeRule = document.getElementById('statExclude');
+
+        let currentData = [];
+
+        /**
+         * Core Logic: Generate 100 groups of 9 unique numbers based on config
+         */
+        function generateNumbers() {
+            // Parse exclude rules
+            const excludeRaw = excludeInput.value.split(',').map(s => s.trim()).filter(s => s.length > 0);
+            statExcludeRule.textContent = excludeRaw.length > 0 ? `包含 "${excludeRaw.join('", "')}"` : "无排除";
+
+            // 1. Create pool 1-999 with filter
+            let pool = [];
+            for (let i = 1; i <= 999; i++) {
+                const s = i.toString();
+                // Check against all exclude rules
+                const shouldExclude = excludeRaw.some(rule => s.includes(rule));
+                if (!shouldExclude) {
+                    pool.push(i);
+                }
+            }
+
+            statPoolSize.textContent = `${pool.length} / 999`;
+
+            // Check if we have enough numbers (900 needed for 100 groups)
+            if (pool.length < 900) {
+                errorBox.classList.remove('hidden');
+                resultsGrid.classList.add('hidden');
+                return null;
+            } else {
+                errorBox.classList.add('hidden');
+                resultsGrid.classList.remove('hidden');
+            }
+
+            // 2. Shuffle pool (Fisher-Yates)
+            for (let i = pool.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [pool[i], pool[j]] = [pool[j], pool[i]];
+            }
+
+            // 3. Take 900 numbers for 100 groups
+            const groups = [];
+            for (let g = 0; g < 100; g++) {
+                const group = pool.slice(g * 9, (g * 9) + 9);
+                group.sort((a, b) => a - b);
+                groups.push(group);
+            }
+            
+            return groups;
+        }
+
+        /**
+         * Render UI
+         */
+        function render(groups) {
+            if (!groups) return;
+            currentData = groups;
+            resultsGrid.innerHTML = '';
+            
+            groups.forEach((group, index) => {
+                const card = document.createElement('div');
+                card.className = 'glass-card p-5 rounded-2xl animate-fade-in';
+                card.style.animationDelay = `${index * 2}ms`; // Faster animation for UX
+                
+                card.innerHTML = `
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-xs font-bold text-slate-500 tracking-wider uppercase">Group #${(index + 1).toString().padStart(3, '0')}</span>
+                        <button onclick="copyGroup(${index})" class="text-slate-400 hover:text-indigo-400 p-1 transition-colors">
+                            <i data-lucide="copy" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2">
+                        ${group.map(num => `
+                            <div class="number-chip py-1.5 px-1 rounded-md text-center font-mono text-sm font-semibold">
+                                ${num}
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                resultsGrid.appendChild(card);
+            });
+            
+            lucide.createIcons();
+        }
+
+        /**
+         * Actions
+         */
+        window.copyGroup = (index) => {
+            const text = currentData[index].join(', ');
+            copyToClipboard(text, `第 ${index + 1} 组已复制`);
+        };
+
+        function copyToClipboard(text, message) {
+            const el = document.createElement('textarea');
+            el.value = text;
+            document.body.appendChild(el);
+            el.select();
+            document.execCommand('copy');
+            document.body.removeChild(el);
+            showToast(message || '已复制');
+        }
+
+        function showToast(msg) {
+            toast.textContent = msg;
+            toast.style.opacity = '1';
+            setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+        }
+
+        function handleRefresh() {
+            const data = generateNumbers();
+            if (data) render(data);
+        }
+
+        // Event Listeners
+        refreshBtn.addEventListener('click', handleRefresh);
+        
+        // Also refresh when Enter is pressed in input
+        excludeInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') handleRefresh();
+        });
+
+        copyAllBtn.addEventListener('click', () => {
+            if (currentData.length === 0) return;
+            const text = currentData.map((g, i) => `Group ${i+1}: ${g.join(', ')}`).join('\n');
+            copyToClipboard(text, '全部 100 组已复制');
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            if (currentData.length === 0) return;
+            let csvContent = "data:text/csv;charset=utf-8,Group,N1,N2,N3,N4,N5,N6,N7,N8,N9\n";
+            currentData.forEach((row, index) => {
+                csvContent += `${index + 1},${row.join(',')}\n`;
+            });
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "numbers_export.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // Start
+        window.onload = () => {
+            handleRefresh();
+        }
+    </script>
+</body>
+</html>
